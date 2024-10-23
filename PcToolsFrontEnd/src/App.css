@@ -1,0 +1,28 @@
+
+
+
+
+/* app user info */
+
+
+button.learn-more .circle {
+    transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+    position: relative;
+    display: flex; /* Changed from block to flex to help centering the icon */
+    justify-content: center; /* Center the icon horizontally */
+    align-items: center; /* Center the icon vertically */
+    margin: 0;
+    width: 3rem;
+    height: 3rem;
+    background: #282936;
+    border-radius: 1.625rem;
+  }
+
+  button:hover .circle {
+    width: 100%; /* If you want to expand the circle, this stays */
+  }
+
+  button:hover .circle .icon.arrow {
+    background: #fff;
+    transform: translate(1rem, 0); /* This is causing the arrow to move */
+  }
