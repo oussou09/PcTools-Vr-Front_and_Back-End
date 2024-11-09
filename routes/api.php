@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ReactionController;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
 ////////////////// Auth Users Info //////////////////
 Route::get('/UserInfo', [UsersController::class, 'UserData']);
 Route::post('/UserLogout', [UsersController::class, 'UserLogout']);
+Route::post('/ResetPassword', [UsersController::class, 'ResetPassword']);
 Route::post('/UserDelete', [UsersController::class, 'UserDelete']);
 ///////////////// all products users  /////////////////
 
@@ -46,6 +48,7 @@ Route::post('/UserDelete', [UsersController::class, 'UserDelete']);
 
 Route::get('/products', [ProductsController::class, 'GetAllProducts']);
 Route::get('/product-Details', [ProductsController::class, 'ProductDetails']);
+Route::get('/ProductCategory', [CategoryController::class, 'ShowProductCategory']);
 
 
 
@@ -55,6 +58,7 @@ Route::get('/product-Details', [ProductsController::class, 'ProductDetails']);
 
 Route::middleware(['auth:sanctum', 'can:sell-products'])->group(function () {
     Route::post('/add-product', [ProductsController::class, 'addproduct']);
+    Route::post('/delete-product', [ProductsController::class, 'DeleteProduct']);
     Route::get('/UserProducts', [ProductsController::class, 'UserProducts']);
 });
 

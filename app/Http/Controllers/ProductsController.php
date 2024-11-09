@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessImageJob;
 use App\Models\Product;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 
 
 class ProductsController extends Controller
@@ -19,7 +20,7 @@ class ProductsController extends Controller
     public function GetAllProducts()
     {
         // Retrieve all products with their associated images
-        $products = Product::with('images')->get();
+        $products = Product::with(['images', 'likes'])->withCount('likes')->get();
 
         // Return the products as a JSON response
         return response()->json([
@@ -43,8 +44,6 @@ class ProductsController extends Controller
 
 ///////////////// Add Users Seller Products //////////////////
 
-
-
 public function addproduct(Request $request)
 {
     // Authenticate user using 'sanctum' guard
@@ -56,10 +55,11 @@ public function addproduct(Request $request)
 
         // Validate the request
         $ProductData = $request->validate([
-            'productName' => 'required|string|max:70|min:10',
-            'Description' => 'required|string|min:10|max:200',
+            'productName' => 'required|string|max:100|min:10',
+            'Description' => 'required|string|min:10|max:500',
             'productPrice' => 'required|numeric|min:1',
             'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'productCategory' => 'required|numeric'
         ]);
 
         // Create the product
@@ -68,6 +68,7 @@ public function addproduct(Request $request)
             'Product_Title' => $ProductData['productName'],
             'Product_Description' => $ProductData['Description'],
             'Product_Price' => $ProductData['productPrice'],
+            'category_id' => $ProductData['productCategory'],
         ]);
 
         $imageUrls = [];
@@ -99,6 +100,36 @@ public function addproduct(Request $request)
         return response()->json(['message' => 'Unauthorized'], 403);
     }
 }
+
+///////////////// Delete Users Seller Products //////////////////
+
+public function DeleteProduct(Request $request)
+{
+    // Retrieve the currently authenticated user
+    $user = $request->user();
+
+    // dd($request->all());
+
+    $validated = $request->validate([
+        'selectedProductId' => 'required|integer'
+    ]);
+
+    $product = Product::findOrFail($validated['selectedProductId']);
+
+    $this->authorize('delete', $product);
+    // Fetch products associated with the user
+
+
+    $product->delete();
+
+    return response()->json([
+        'status' => 200,
+        'message' => 'product has been deleted'
+    ]);
+
+}
+
+///////////////// Show Users Seller Products //////////////////
 
 public function UserProducts(Request $request)
 {
@@ -136,11 +167,6 @@ public function ProductDetails(Request $request)
 }
 
 
-
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         //

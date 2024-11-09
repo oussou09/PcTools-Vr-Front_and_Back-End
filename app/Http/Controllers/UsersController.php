@@ -14,12 +14,6 @@ class UsersController extends Controller
 
     public function registeruser(Request $request)
     {
-        // dd($request);
-        // Log::info('API request received at /api/register');
-        // Log::info('Request Data:', $request->all());
-        // Log::info('Current CSRF token:', [csrf_token()]);
-        // Log::info('Request Headers:', $request->headers->all());
-
         $credentials = $request->validate([
             'fullname' => 'required|string|min:10|max:50',
             'email' => 'required|string|email|max:255|unique:users',
@@ -27,15 +21,29 @@ class UsersController extends Controller
             'password' => 'required|string|min:10|max:30',
         ]);
 
-        // Create the user and hash the password
+        // Hash the password
         $credentials['password'] = bcrypt($credentials['password']);
-        User::create($credentials);
 
-        return response()->json([
-            'message' => 'User created successfully',
-            'status' => 200,
-        ]);
+        try {
+            $user = User::create($credentials);
+
+            if ($user["account_type"] == 0) {
+                Carts::create(['user_id' => $user->id]);
+            }
+
+            return response()->json([
+                'message' => 'User created successfully',
+                'status' => 200,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create user',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     public function loginusereque(Request $request)
     {
@@ -139,7 +147,6 @@ class UsersController extends Controller
                 $exportData['products_count'] = $user->products ? $user->products->count() : 0;
             } else {
                 $exportData['likedProducts'] = $user->likedProducts;
-
                 $exportData['UserCart'] = $user->cart->cartItems->count();
             }
 
@@ -154,6 +161,43 @@ class UsersController extends Controller
                 'message' => 'Unauthenticated',
             ], 401);
         }
+    }
+
+    public function ResetPassword(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user) {
+
+            // Validate the incoming request data
+            $credentials = $request->validate([
+                'CurrentPassword' => 'required',
+                'NewPassword1' => 'required|min:8',
+                'NewPassword2' => 'required|same:NewPassword1', // Ensures the passwords match
+            ]);
+
+            // Verify that the provided current password matches the user's current password
+            if (!Hash::check($credentials['CurrentPassword'], $user->password)) {
+                return response()->json([
+                    'message' => 'Current password is incorrect',
+                    'status' => 400,
+                ], 400);
+            }
+
+            // Update the user's password with the new password
+            $user->password = Hash::make($credentials['NewPassword1']);
+            $user->save();
+
+            return response()->json([
+                'message' => 'Password has been updated successfully',
+                'status' => 200,
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Not authenticated',
+            'status' => 401,
+        ]);
     }
 
     public function UserDelete(Request $request)

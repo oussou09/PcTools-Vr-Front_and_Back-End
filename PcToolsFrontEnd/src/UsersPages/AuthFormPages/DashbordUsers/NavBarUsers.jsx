@@ -64,6 +64,7 @@ const Navigation = () => {
             console.log('Logout response:', response.data);
             Cookies.remove('auth_user_token');
             navigate('/');
+            navigate(0);
         } catch (error) {
             console.error('Error during logout:', error);
         }
@@ -114,7 +115,7 @@ const Navigation = () => {
                 {/* Cart Section */}
                 <li className="relative group">
                     <Link
-                    to={`/cart/user/${users?.id}`}
+                    to={`/cart/${users?.id}`}
                     className="flex items-center hover:bg-gray-700 p-3 rounded-md relative"
                     >
                     <ShoppingCartTwoToneIcon style={{ color: 'white', fontSize: 30, marginLeft: '5px' }} />

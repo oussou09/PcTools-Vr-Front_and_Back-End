@@ -12,7 +12,7 @@ class HomeController extends Controller
     public function storecontact(Request $request) {
         $contactdata = $request->validate([
             'email' => 'email|required|string',
-            'message' => 'required|string|min:20',
+            'message' => 'required|string|min:10',
         ]);
 
         Contact::create($contactdata);

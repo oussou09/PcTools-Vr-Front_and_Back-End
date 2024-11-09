@@ -80,7 +80,7 @@ import { SnakAlert, SnakAlertError } from '../../AlertMessage/SnakAlert';
             console.log("ProductLength:", productLength);
 
         }
-    }, [carts]); // Only run when carts changes
+    }, [carts]);
 
     const handleRemoveProductCard = async (product_id) => {
         try {
@@ -89,6 +89,8 @@ import { SnakAlert, SnakAlertError } from '../../AlertMessage/SnakAlert';
 
             await refreshUserData();
             // await refreshProducts();
+            setProductShipping(0);
+            setProductLength(0);
             await fetchCartData();
             setAlertMessage(`${response.message}.`);
             setIsError(false);
@@ -150,7 +152,7 @@ import { SnakAlert, SnakAlertError } from '../../AlertMessage/SnakAlert';
                     </div>
                     )})
                     ) : (
-                        <h1 className="text-2xl font-bold text-gray-100">No products in your carts available</h1>
+                        <h1 className="text-2xl font-bold text-gray-100">No products Available in your carts available</h1>
                     )}
 
 
@@ -158,12 +160,12 @@ import { SnakAlert, SnakAlertError } from '../../AlertMessage/SnakAlert';
 
                 <div className="bg-white rounded-md px-4 py-6 h-max shadow-[0_2px_12px_-3px_rgba(6,81,237,0.3)]">
                     <ul className="text-gray-800 space-y-4">
-                        <li className="flex flex-wrap gap-4 text-sm">Subtotal <span className="ml-auto font-bold">${totalProduct}.00</span></li>
                         <li className="text-sm bg-gray-800 text-white p-3 rounded-lg shadow-md">
                             <span className="text-yellow-400 font-semibold">Attention!</span>
                             <span className="text-white"> If you buy 5 or more products, shipping will be free!</span>
                         </li>
-                        <li className="flex flex-wrap gap-4 text-sm">Shipping <span className="ml-auto font-bold">{productShipping>0 ? `$${productShipping}.00` : "Free Shipping"}</span></li>
+                        <li className="flex flex-wrap gap-4 text-sm">Subtotal <span className="ml-auto font-bold">${totalProduct}.00</span></li>
+                        <li className="flex flex-wrap gap-4 text-sm">Shipping <span className="ml-auto font-bold">{productShipping>0 ? `$${productShipping}.00` : productShipping<0 ? "Free Shipping" : "$0.00"}</span></li>
                         <li className="flex flex-wrap gap-4 text-sm">Tax <span className="ml-auto font-bold">${productLength}.00</span></li>
                         <hr className="border-gray-300" />
                         <li className="flex flex-wrap gap-4 text-sm font-bold">Total <span className="ml-auto">${totalProductFees}.00</span></li>

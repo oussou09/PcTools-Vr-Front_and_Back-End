@@ -70,7 +70,7 @@ const ContactPage = () => {
             {errors.email && <p className="text-red-500 mt-2">{errors.email.message}</p>}
           </div>
           <div className="mb-4">
-            <label htmlFor="message" className="block text-sm font-medium text-gray-700">Description</label>
+            <label htmlFor="message" className="block text-sm font-medium text-gray-700">Description <span className='text-black opacity-40'>min: 10 characters</span></label>
             <textarea
               name='message'
               id="message"

@@ -12,20 +12,18 @@ import LoadingPage from '../HeplersFunctions/LoadingPage';
 import { AuthContext } from '../HeplersFunctions/CheckSCRFandAUTH';
 import { getCsrfToken } from '../HeplersFunctions/csrfTokenCheck';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
+import FavoriteSharpIcon from '@mui/icons-material/FavoriteSharp';
 import { useNavigate } from 'react-router-dom'; // useNavigate instead of browserHistory
 import NotFoundPage404 from '../errors/NotFoundPage404';
-import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import { FunctLikeDeslike } from '../UsersPages/UserBuyerPages/FunctLikeDeslike';
 import { FuncAddCart } from './UserBuyerPages/FuncAddCart';
 
 
 
 const ProductDetails = () => {
-    const { product: contextProducts, loading: contextLoading, refreshProducts } = useContext(ProductsContext);
-    const { user, authenticated, fetchUserData } = useContext(AuthContext);
+    const { product: contextProducts, loading: contextLoading, likedProductIds, refreshProducts } = useContext(ProductsContext);
+    const { user, authenticated, fetchUserData, refreshUserData } = useContext(AuthContext);
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const { id } = useParams();
@@ -87,14 +85,18 @@ const ProductDetails = () => {
 }, [id, contextProducts, navigate]); // Modified dependency array to reduce re-renders
 
 
+    const isLiked = product ? likedProductIds?.has(product.id) : false;
+    console.log('isLiked', isLiked ,'\n product:',product)
+
     const handleLike = async (user_id, product_id) => {
+        console.log('begin work')
         try {
             const response = await FunctLikeDeslike(user_id, product_id);
             if (response.error) {
                 console.error(response.error);
                 } else {
                     console.log('Reaction successful:', response);
-                    await fetchUserData();
+                    await refreshUserData();
                     await refreshProducts();
         }
         } catch (error) {
@@ -135,27 +137,34 @@ return (
         <div className="lg:col-span-3 h-auto p-8">
             <div className="relative flex items-center justify-center">
                 {/* Wrapper around Swiper with a fixed width */}
-                <div className="max-w-[600px] w-full mx-auto">
-                <Swiper
-                    cssMode={true}
-                    navigation={true}
-                    pagination={true}
-                    mousewheel={true}
-                    keyboard={true}
-                    modules={[Navigation, Pagination, Mousewheel, Keyboard]}
-                    className="mySwiper"
-                >
+                {product.images.length>0 ? (
+                    <div className="max-w-[600px] w-full mx-auto">
+                        <Swiper
+                        cssMode={true}
+                        navigation={true}
+                        pagination={true}
+                        mousewheel={true}
+                        keyboard={true}
+                        modules={[Navigation, Pagination, Mousewheel, Keyboard]}
+                        className="mySwiper"
+                    >
+
                         {product.images.map((image, index) => (
                             <SwiperSlide key={index}>
-                                <img
-                                    src={`http://localhost:8000/storage/${image.path}`}
-                                    alt="Product"
-                                    className="w-full h-full object-contain mx-auto"
-                                />
+                                    <img
+                                        src={`http://localhost:8000/storage/${image.path}`}
+                                        alt="Product"
+                                        className="w-full h-full object-contain mx-auto"
+                                    />
                             </SwiperSlide>
                         ))}
-                    </Swiper>
-                </div>
+                        </Swiper>
+                    </div>
+                ) : (
+                    <div className="w-full mx-auto flex justify-center items-center">
+                        <BrokenImageIcon className='lg:mt-10' style={{ color: 'white', width: '100%', maxWidth: '400px', height: 'auto', }} />
+                    </div>
+                )}
             </div>
         </div>
 
@@ -195,12 +204,43 @@ return (
                 <div className="flex flex-wrap gap-4 mt-8">
                     <button type="button" disabled={user?.account_type === "1"} className={`min-w-[200px] px-4 py-3 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded  ${user.account_type === "1" ? "opacity-50 cursor-not-allowed" : ""}`}
                         onClick={(e) => { e.preventDefault(); handleCart(navigate , product.id ,quantity); }}>
-                        Add to cart</button>
-                    <button type="button"
+                        Add to cart
+                    </button>
+                    <div disabled={user?.account_type === "1"} className={`relative inline-flex items-center w-[136px] h-12 bg-gray-800 rounded-lg shadow-lg  ${user.account_type === "1" ? "opacity-50 cursor-not-allowed" : ""}`}>
+                        {/* Like Button */}
+                        <input
+                            type="checkbox"
+                            id="heart"
+                            className="hidden"
+                            checked={isLiked}
+                            onChange={() => handleLike(user?.id, product.id)}
+                        />
+                        <label htmlFor="heart" className="flex items-center justify-center w-2/3 cursor-pointer">
+                            {isLiked ? (
+                                <FavoriteSharpIcon className="text-red-500 transition-transform transform scale-125" fontSize="large" />
+                            ) : (
+                                <FavoriteBorderOutlinedIcon className="text-gray-400 transition-transform" fontSize="large" />
+                            )}
+                            <span className="ml-2 text-gray-200 text-base font-medium">Like</span>
+                        </label>
+
+                        {/* Like Count */}
+                        <div
+                            className={`w-1/3 flex items-center justify-center text-base font-semibold border-l border-gray-600 transition-transform ${isLiked ? 'text-white' : 'text-gray-500'}`}
+                        >
+                            {isLiked ? product.likes_count + 1 : product.likes_count}
+                        </div>
+                    </div>
+
+                    {/* <button type="button"
                     onClick={(e) => { e.preventDefault(); handleLike(user?.id, product.id); }}
                     disabled={user?.account_type === "1"} className={`min-w-[200px] px-4 py-2.5 border border-gray-800 bg-transparent hover:bg-gray-50 text-gray-800 text-sm font-semibold rounded  ${user.account_type === "1" ? "opacity-50 cursor-not-allowed" : ""}`}>
-                        <FavoriteBorderOutlinedIcon style={{ color: 'black', fontSize:'30px' }} />
-                    </button>
+                        {isLiked ? (
+                            <FavoriteSharpIcon style={{ color: 'red', fontSize: '30px' }} />
+                        ) : (
+                            <FavoriteBorderOutlinedIcon style={{ color: 'black', fontSize: '30px' }} />
+                        )}
+                    </button> */}
                 </div>
             </>
             )}

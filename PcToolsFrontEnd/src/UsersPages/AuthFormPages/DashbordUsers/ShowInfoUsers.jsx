@@ -1,22 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom'; // Assuming you're using react-router for navigation
 import { AuthContext } from '../../../HeplersFunctions/CheckSCRFandAUTH';
 import LoadingPage from '../../../HeplersFunctions/LoadingPage';
 import GetUserLengthInfo from './GetUserLengthInfo';
 import styled from "styled-components";
-import EditTwoToneIcon from '@mui/icons-material/EditTwoTone';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
-import { getCsrfToken } from '../../../HeplersFunctions/csrfTokenCheck';
+
+import ModalComponent from './ModalComponent';
 
 const Dashboard = () => {
   const { user, authenticated, loading } = useContext(AuthContext);
   const [users, setUsers] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  const navigate = useNavigate();  // Initialize the navigate hook
+  const [modalType, setModalType] = useState(null); // For modal type
 
   useEffect(() => {
     if (user && authenticated) {
@@ -30,49 +24,28 @@ const Dashboard = () => {
     return <div className="text-white">User not found or not authenticated</div>;
   }
 
-  const handleDeleteAcc = async () => {
+    const openModal = (type) => {
+        setModalType(type);
+        setIsModalOpen(true);
+      };
 
-    try {
-        // Fetch CSRF token
-        const csrfToken = await getCsrfToken();
-        const token = Cookies.get('auth_user_token'); // Get user auth token
-
-        console.log('token_csrf:', csrfToken, '\n', `Bearer ${token}`)
-
-        // Make the logout request with the CSRF token
-        const response = await axios.post(
-            'http://localhost:8000/api/UserDelete',
-            {},
-            {
-                withCredentials: true,
-                headers: {
-                    'X-XSRF-TOKEN': csrfToken,
-                    'Authorization': `Bearer ${token}`,
-                },
-            }
-        );
-
-        console.log('response:', response.data);
-        Cookies.remove('auth_user_token');
-        navigate('/');
-    } catch (error) {
-        console.error('Error during :', error);
-    }
-};
-
+      const closeModal = () => {
+        setIsModalOpen(false);
+        setModalType(null);
+      };
 
 
   return (
     <div className="content w-full flex flex-col justify-center mt-10">
-      <main>
+      <main className={isModalOpen ? 'blur-sm pointer-events-none' : ''}>
         <h2 className="text-2xl font-bold text-center mb-12">Welcome to Dashboard!</h2>
         <article className="container mx-auto p-5">
           <section className="flex flex-col md:flex-row justify-evenly">
             <div className="flex flex-col justify-around">
               {/* Profile Card */}
-              <div className="relative bg-white rounded-lg shadow-md px-6 py-6 mb-5">
-                <div className="flex items-center gap-4 mb-8">
-                  <figure className="w-12 h-12 rounded overflow-hidden">
+              <div className="relative bg-white rounded-lg shadow-md px-6 py-6 mb-5 flex justify-around items-center">
+                <div className="flex items-center gap-4">
+                  <figure className="w-20 h-20 rounded overflow-hidden">
                     <img
                       src="https://randompicturegenerator.com/img/people-generator/g1f3229025c3d5bfe285df1d4bad25c71ec473af8e98d80bb634561616ccd9788e5486c896768a6c1b04aeafa2fae4746_640.jpg"
                       alt="Angela Ronaldo"
@@ -87,8 +60,8 @@ const Dashboard = () => {
                 <ul className="flex flex-wrap gap-4">
                   <li>
                     <a href={`mailto:${users.email}`} className="flex items-center gap-2 text-gray-500 hover:text-gray-700">
-                      <span className="material-symbols-rounded icon">email:</span>
-                      <p>{users.email}</p>
+                      <span className="material-symbols-rounded icon text-2xl">email:</span>
+                      <p className='text-xl'>{users.email}</p>
                     </a>
                   </li>
                 </ul>
@@ -101,11 +74,10 @@ const Dashboard = () => {
                       <p className='text-black'>{users.fullname}</p>
                   </li>
                 </ul>
-              <div className="flex items-center flex-wrap mb-8">
 
-
+              <div className="flex items-center flex-wrap">
               <StyledWrapper className="p-5">
-                <button className="learn-more">
+                <button className="learn-more" onClick={() => openModal("edit")}>
                     <span className="circle" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-[2.5em] w-[2.5em] text-center pl-2 pt-2" viewBox="0 -960 960 960" fill="#e8eaed"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
                         </svg>
@@ -140,14 +112,14 @@ const Dashboard = () => {
                         <ellipse cx="15" cy="10.5" rx="1" ry="1.5" fill="#fff"></ellipse>
                         <ellipse cx="9" cy="10.5" rx="1" ry="1.5" fill="#fff"></ellipse>
                         </g>
-                    </svg>
+                        </svg>
                         </span>
-                        <button className="button-text" onClick={openModal}>Delete Account</button>
+                        <button className="button-text" onClick={() => openModal("delete")}>Delete Account</button>
                     </button>
                 </StyledWrapper>
 
                 <StyledWrapper className='p-5'>
-                        <button className="learn-more">
+                        <button className="learn-more" onClick={() => openModal("resetPassword")}>
                             <span className="circle" aria-hidden="true">
                             <svg
                                 className="h-[2.5em] w-[2.5em] text-center pl-2 pt-2"
@@ -166,68 +138,12 @@ const Dashboard = () => {
           </section>
         </article>
       </main>
-        {/* Modal of delete account */}
-        {isModalOpen && (
-        <div className="fixed z-50 inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto flex items-center justify-center">
-          <div className="relative mx-auto shadow-xl rounded-md bg-white max-w-md">
-            {/* Close button */}
-            <div className="flex justify-end p-2">
-              <button
-                onClick={closeModal}
-                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal content */}
-            <div className="p-6 pt-0 text-center">
-              <svg
-                className="w-20 h-20 text-red-600 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
-              </svg>
-              <h3 className="text-xl font-normal text-gray-500 mt-5 mb-6">Are you sure you want to delete this user?</h3>
-
-              {/* Confirm button */}
-              <button
-                onClick={() => {
-                  // Add your delete logic here
-                  console.log("User deleted");
-                  handleDeleteAcc();
-                  closeModal();
-                }}
-                className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-base inline-flex items-center px-3 py-2.5 text-center mr-2"
-              >
-                Yes, I'm sure
-              </button>
-
-              {/* Cancel button */}
-              <button
-                onClick={closeModal}
-                className="text-gray-900 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-cyan-200 border border-gray-200 font-medium inline-flex items-center rounded-lg text-base px-3 py-2.5 text-center"
-              >
-                No, cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Modal Component */}
+        <ModalComponent
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            modalType={modalType}
+        />
     </div>
   );
 };
